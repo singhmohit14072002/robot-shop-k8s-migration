@@ -39,9 +39,19 @@ catalogue: {}
 
 dispatch: {}
 
-mongodb: {}
+mongodb:
+  persistence:
+    enabled: true
+    storageClassName: default
+    accessMode: ReadWriteOnce
+    size: 2Gi
 
-mysql: {}
+mysql:
+  persistence:
+    enabled: true
+    storageClassName: default
+    accessMode: ReadWriteOnce
+    size: 2Gi
 
 payment:
   # Alternative payment gateway URL
@@ -49,7 +59,12 @@ payment:
   gateway: null
   #gateway: https://www.worldpay.com
 
-rabbitmq: {}
+rabbitmq:
+  persistence:
+    enabled: true
+    storageClassName: default
+    accessMode: ReadWriteOnce
+    size: 2Gi
 
 ratings: {}
 

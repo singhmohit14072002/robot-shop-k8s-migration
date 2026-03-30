@@ -1,3 +1,21 @@
+{{- if .Values.mysql.persistence.enabled }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mysql
+  labels:
+    service: mysql
+spec:
+  accessModes:
+    - {{ .Values.mysql.persistence.accessMode | default "ReadWriteOnce" }}
+  resources:
+    requests:
+      storage: {{ .Values.mysql.persistence.size | default "2Gi" }}
+  {{- if .Values.mysql.persistence.storageClassName }}
+  storageClassName: {{ .Values.mysql.persistence.storageClassName }}
+  {{- end }}
+---
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -27,6 +45,11 @@ spec:
             add: ["NET_ADMIN"]
         ports:
         - containerPort: 3306
+        {{- if .Values.mysql.persistence.enabled }}
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        {{- end }}
         resources:
           limits:
             cpu: 200m
@@ -35,6 +58,12 @@ spec:
             cpu: 100m
             memory: 700Mi
       restartPolicy: Always
+      {{- if .Values.mysql.persistence.enabled }}
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: mysql
+      {{- end }}
       {{- with .Values.mysql.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}

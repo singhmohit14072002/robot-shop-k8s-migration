@@ -1,3 +1,21 @@
+{{- if .Values.mongodb.persistence.enabled }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: mongodb
+  labels:
+    service: mongodb
+spec:
+  accessModes:
+    - {{ .Values.mongodb.persistence.accessMode | default "ReadWriteOnce" }}
+  resources:
+    requests:
+      storage: {{ .Values.mongodb.persistence.size | default "2Gi" }}
+  {{- if .Values.mongodb.persistence.storageClassName }}
+  storageClassName: {{ .Values.mongodb.persistence.storageClassName }}
+  {{- end }}
+---
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,6 +41,11 @@ spec:
         imagePullPolicy: {{ .Values.image.pullPolicy }}
         ports:
         - containerPort: 27017
+        {{- if .Values.mongodb.persistence.enabled }}
+        volumeMounts:
+        - name: data
+          mountPath: /data/db
+        {{- end }}
         resources:
           limits:
             cpu: 200m
@@ -31,6 +54,12 @@ spec:
             cpu: 100m
             memory: 100Mi
       restartPolicy: Always
+      {{- if .Values.mongodb.persistence.enabled }}
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: mongodb
+      {{- end }}
       {{- with .Values.mongodb.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}

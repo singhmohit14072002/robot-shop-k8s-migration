@@ -1,3 +1,21 @@
+{{- if .Values.rabbitmq.persistence.enabled }}
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: rabbitmq
+  labels:
+    service: rabbitmq
+spec:
+  accessModes:
+    - {{ .Values.rabbitmq.persistence.accessMode | default "ReadWriteOnce" }}
+  resources:
+    requests:
+      storage: {{ .Values.rabbitmq.persistence.size | default "2Gi" }}
+  {{- if .Values.rabbitmq.persistence.storageClassName }}
+  storageClassName: {{ .Values.rabbitmq.persistence.storageClassName }}
+  {{- end }}
+---
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -24,6 +42,11 @@ spec:
         ports:
         - containerPort: 5672
         - containerPort: 15672
+        {{- if .Values.rabbitmq.persistence.enabled }}
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/rabbitmq
+        {{- end }}
         resources:
           limits:
             cpu: 200m
@@ -32,6 +55,12 @@ spec:
             cpu: 100m
             memory: 256Mi
       restartPolicy: Always
+      {{- if .Values.rabbitmq.persistence.enabled }}
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: rabbitmq
+      {{- end }}
       {{- with .Values.rabbitmq.affinity }}
       affinity:
         {{- toYaml . | nindent 8 }}
